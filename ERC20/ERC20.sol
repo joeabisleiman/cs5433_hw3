@@ -6,10 +6,10 @@ contract ERC20Interface {
     function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
     function approve(address _spender, uint256 _value) returns (bool success);
     function allowance(address _owner, address _spender) constant returns (uint256 remaining);
-    
+
     function deposit() payable;
     function withdraw(uint256 _value) returns (bool success);
-    
+
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
@@ -17,14 +17,14 @@ contract ERC20Interface {
 contract MyToken is ERC20Interface {
     // mapping from account address to current balance
     mapping(address => uint256) _accountBalances;
-    
-    // mapping from account owner to accounts allowed to withdraw 
+
+    // mapping from account owner to accounts allowed to withdraw
     // specified amounts
     mapping(address => mapping(address => uint256)) _approvals;
-    
+
     uint256 private _totalSupply = 0;
 
-    string constant public name = "YOUR_NETID"; // TODO CHANGE THIS!
+    string constant public name = "jba68"; // TODO CHANGE THIS!
 
     function deposit() payable {
         // check that deposit doesn't overflow total_supply
@@ -48,6 +48,15 @@ contract MyToken is ERC20Interface {
 
         // Make sure the user's balance is sufficient
         // (otherwise throw)
+        assert(_accountBalances[msg.sender] >= _num_tokens);
+        if(_num_tokens >= 0) {
+          _accountBalances[msg.sender] -= _num_tokens;
+          _totalSupply -= _num_tokens;
+          uint amount_to_withdraw = _num_tokens*1000;
+          msg.sender.transfer(amount_to_withdraw);
+        }
+        else
+          throw;
 
         // Adjust data structures appropriately
 
@@ -56,16 +65,18 @@ contract MyToken is ERC20Interface {
 
 
         // Issue log of transfer to 0x0 (represents burning of tokens in spec)
+        Transfer(msg.sender, 0x0, _num_tokens);
+        return true;
     }
-    
+
     function totalSupply() constant returns (uint256 total_supply) {
         return _totalSupply;
     }
-    
+
     function balanceOf(address _owner) constant returns (uint256 balance) {
-        return _accountBalances[_owner];   
+        return _accountBalances[_owner];
     }
-    
+
     function transfer(address _to, uint256 _value) returns (bool success) {
         if ( _accountBalances[msg.sender] >= _value  // sender has enough resources
         ){
@@ -74,10 +85,10 @@ contract MyToken is ERC20Interface {
             Transfer(msg.sender, _to, _value);
             return true;
         }
-        
+
         throw;
     }
-    
+
     function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
         if ( _approvals[_from][msg.sender] >= _value  // sender is approved to withdraw
              && _accountBalances[_from] >= _value  // origin account has enough resources
@@ -88,17 +99,17 @@ contract MyToken is ERC20Interface {
             Transfer(_from, _to, _value);
             return true;
         }
-        
-        throw;   
+
+        throw;
     }
-    
+
     function approve(address _spender, uint256 _value) returns (bool success) {
         _approvals[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
         return true;
     }
-    
+
     function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-        return _approvals[_owner][_spender];   
+        return _approvals[_owner][_spender];
     }
 }

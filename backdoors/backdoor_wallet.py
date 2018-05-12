@@ -70,18 +70,25 @@ def verify_key(recovered_key_hex, challenge):
     return True
 
 def get_key_from_challenge(challenge):
-    for line in challenge.splitlines():
-        line_challenge = line.split("; Signature: ")
-        assert(len(line_challenge) == 2)
-        message = line_challenge[0]
-        signature = line_challenge[1]
-        print(message, signature)
+	key = ""
+	for line in challenge.splitlines():
+		line_challenge = line.split("; Signature: ")
+		assert(len(line_challenge) == 2)
+		message = line_challenge[0]
+		signature = line_challenge[1]
+		temp = "{0:8b}".format(int(signature,16))
+		signature_int = int(signature, 16)
+		bit = '{0:0192b}'.format(signature_int)[-1]
+		key = key + bit
+	answer = "{0:0>4X}".format(int(key, 2))
+	print ("YOUR KEY IS: " + answer)
+	return answer
 
     # TODO Problem 3 - Use this to reconstruct Rafael's Key
 
 # get_challenge_for("YOUR_NETID", "challenge") - this call won't work since some code is removed
 # but gives you some idea as to how the challeng was created
 
-challenge_text = open("challenges/YOUR_NETID").read().strip()
+challenge_text = open("challenges/jba68").read().strip()
 sk = get_key_from_challenge(challenge_text)
 print(verify_key(sk, challenge_text)) # should print True
